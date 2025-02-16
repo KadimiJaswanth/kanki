@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/animation.dart';
+import 'package:fl_chart/fl_chart.dart';
 
 class HealthScreen extends StatefulWidget {
   @override
@@ -11,15 +13,24 @@ class _HealthScreenState extends State<HealthScreen> {
   int heartRate = 72;
   double hydration = 2.5;
   int caloriesBurned = 250;
-  double distanceTraveled = 5.0; // Example value in km
-  double bodyFatPercentage = 18.0; // Example value
+  double distanceTraveled = 5.0;
+  double bodyFatPercentage = 18.0;
   int restingHeartRate = 60;
   double bmi = 0.0;
   double sleepHours = 7.5;
-  double hydrationProgress = 0.6; // 60% of the goal
+  double hydrationProgress = 0.6;
   bool isDarkMode = false;
 
-  // Function to calculate BMI
+  // Example data for daily activity (could be replaced with real data)
+  List<FlSpot> activityData = [
+    FlSpot(0, 2),
+    FlSpot(1, 2.5),
+    FlSpot(2, 3),
+    FlSpot(3, 2.8),
+    FlSpot(4, 3.2),
+    FlSpot(5, 4),
+  ];
+
   double calculateBMI() {
     return weight / (height * height);
   }
@@ -32,7 +43,7 @@ class _HealthScreenState extends State<HealthScreen> {
         title: Text("Health Monitoring"),
         centerTitle: true,
         elevation: 0,
-        backgroundColor: isDarkMode ? Colors.black : Color(0xFF1E88E5), // Conditional background color for dark mode
+        backgroundColor: isDarkMode ? Colors.black : Color(0xFF1E88E5),
         actions: [
           IconButton(
             icon: Icon(isDarkMode ? Icons.brightness_7 : Icons.brightness_4),
@@ -50,12 +61,8 @@ class _HealthScreenState extends State<HealthScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Section with Neumorphism
               neumorphicSection("Physical Health Status", isDarkMode),
-
               SizedBox(height: 20),
-
-              // Vital Stats Section with neumorphic cards
               buildNeumorphicCard("Weight", "$weight kg", Icons.fitness_center),
               buildNeumorphicCard("Height", "$height m", Icons.height),
               buildNeumorphicCard("Heart Rate", "$heartRate bpm", Icons.favorite),
@@ -64,37 +71,24 @@ class _HealthScreenState extends State<HealthScreen> {
               buildNeumorphicCard("Distance Traveled", "$distanceTraveled km", Icons.directions_run),
               buildNeumorphicCard("Body Fat Percentage", "${bodyFatPercentage}%", Icons.accessibility),
               buildNeumorphicCard("Resting Heart Rate", "$restingHeartRate bpm", Icons.access_alarm),
-
               SizedBox(height: 20),
-
-              // Sleep Tracker Section
               neumorphicSection("Sleep & Recovery", isDarkMode),
               buildNeumorphicCard("Sleep Hours", "$sleepHours hours", Icons.bed),
-
               SizedBox(height: 20),
-
-              // BMI Display
               neumorphicCardWithAnimation("BMI: ${bmi.toStringAsFixed(2)}", Icons.favorite),
-
               SizedBox(height: 20),
-
-              // Hydration Progress
               buildHydrationProgress(isDarkMode),
-
               SizedBox(height: 20),
-
-              // Fitness Goals Section
               buildFitnessGoals(isDarkMode),
-
               SizedBox(height: 20),
-
-              // Motivational Section
               buildMotivationalQuote(isDarkMode),
+              SizedBox(height: 20),
+              buildActivityChart(isDarkMode),
             ],
           ),
         ),
       ),
-      backgroundColor: isDarkMode ? Colors.black : Colors.white, // Background color for dark mode
+      backgroundColor: isDarkMode ? Colors.black : Colors.white,
     );
   }
 
@@ -103,7 +97,11 @@ class _HealthScreenState extends State<HealthScreen> {
     return Container(
       padding: EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: isDarkMode ? Colors.grey[850] : Colors.white,
+        gradient: LinearGradient(
+          colors: [isDarkMode ? Colors.grey[800]! : Color(0xFFE1F5FE), Colors.blue.shade100],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
@@ -203,7 +201,7 @@ class _HealthScreenState extends State<HealthScreen> {
     );
   }
 
-  // Hydration Progress with neumorphism
+  // Hydration Progress with neumorphism and circular indicator
   Widget buildHydrationProgress(bool isDarkMode) {
     return Container(
       padding: EdgeInsets.all(20),
@@ -231,11 +229,11 @@ class _HealthScreenState extends State<HealthScreen> {
             ),
           ),
           SizedBox(height: 10),
-          LinearProgressIndicator(
+          CircularProgressIndicator(
             value: hydrationProgress,
-            color: Color(0xFF1E88E5),
+            strokeWidth: 10,
             backgroundColor: isDarkMode ? Colors.grey[700]! : Colors.grey[300]!,
-            minHeight: 10,
+            valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF1E88E5)),
           ),
           SizedBox(height: 10),
           Text(
@@ -334,6 +332,62 @@ class _HealthScreenState extends State<HealthScreen> {
           Text(
             "- Steve Jobs",
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: isDarkMode ? Colors.white : Colors.grey),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Activity Chart (Fixed with proper sizing)
+  Widget buildActivityChart(bool isDarkMode) {
+    return Container(
+      padding: EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: isDarkMode ? Colors.grey[850] : Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: isDarkMode ? Colors.black26 : Colors.grey[300]!,
+            blurRadius: 10,
+            spreadRadius: 2,
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            "Daily Activity (Distance Traveled)",
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: isDarkMode ? Colors.white : Color(0xFF1E88E5),
+            ),
+          ),
+          SizedBox(height: 10),
+          // Wrap the LineChart with a SizedBox to give it a fixed height
+          SizedBox(
+            height: 250,  // Set a fixed height for the chart
+            child: LineChart(
+              LineChartData(
+                gridData: FlGridData(show: true),
+                titlesData: FlTitlesData(show: false),
+                borderData: FlBorderData(show: false),
+                minX: 0,
+                maxX: 6,
+                minY: 0,
+                maxY: 5,
+                lineBarsData: [
+                  LineChartBarData(
+                    spots: activityData,
+                    isCurved: true,
+                    color: Color(0xFF1E88E5),
+                    dotData: FlDotData(show: false),
+                    belowBarData: BarAreaData(show: false),
+                  ),
+                ],
+              ),
+            ),
           ),
         ],
       ),
